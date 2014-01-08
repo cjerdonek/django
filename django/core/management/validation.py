@@ -59,10 +59,6 @@ def get_validation_errors(outfile, app=None):
             if cls.USERNAME_FIELD in cls.REQUIRED_FIELDS:
                 e.add(opts, 'The field named as the USERNAME_FIELD should not be included in REQUIRED_FIELDS on a swappable User model.')
 
-            # Check that the username field is unique
-            if not opts.get_field(cls.USERNAME_FIELD).unique:
-                e.add(opts, 'The USERNAME_FIELD must be unique. Add unique=True to the field parameters.')
-
         # Model isn't swapped; do field-specific validation.
         for f in opts.local_fields:
             if f.name == 'id' and not f.primary_key and opts.pk.name == 'id':
