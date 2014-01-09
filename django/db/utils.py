@@ -247,8 +247,12 @@ class ConnectionRouter(object):
                     if chosen_db:
                         return chosen_db
             try:
+                # The following error can be raised if hints['instance'] is None:
+                #   AttributeError: 'NoneType' object has no attribute '_state'
+                # See also Django ticket #21755:
+                #   https://code.djangoproject.com/ticket/21755
                 return hints['instance']._state.db or DEFAULT_DB_ALIAS
-            except KeyError:
+            except (KeyError, AttributeError):
                 return DEFAULT_DB_ALIAS
         return _route_db
 
