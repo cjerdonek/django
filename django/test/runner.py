@@ -360,7 +360,7 @@ class DiscoverRunner(object):
 
     def __init__(self, pattern=None, top_level=None, verbosity=1,
                  interactive=True, failfast=False, keepdb=False,
-                 reverse=False, debug_sql=False, parallel=0,
+                 reverse=False, debug_mode=False, debug_sql=False, parallel=0,
                  **kwargs):
 
         self.pattern = pattern
@@ -371,6 +371,7 @@ class DiscoverRunner(object):
         self.failfast = failfast
         self.keepdb = keepdb
         self.reverse = reverse
+        self.debug_mode = debug_mode
         self.debug_sql = debug_sql
         self.parallel = parallel
 
@@ -398,7 +399,7 @@ class DiscoverRunner(object):
 
     def setup_test_environment(self, **kwargs):
         setup_test_environment()
-        settings.DEBUG = False
+        settings.DEBUG = self.debug_mode
         unittest.installHandler()
 
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):

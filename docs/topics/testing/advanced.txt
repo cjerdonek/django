@@ -369,7 +369,7 @@ behavior. This class defines the ``run_tests()`` entry point, plus a
 selection of other methods that are used to by ``run_tests()`` to set up,
 execute and tear down the test suite.
 
-.. class:: DiscoverRunner(pattern='test*.py', top_level=None, verbosity=1, interactive=True, failfast=True, keepdb=False, reverse=False, debug_sql=False, **kwargs)
+.. class:: DiscoverRunner(pattern='test*.py', top_level=None, verbosity=1, interactive=True, failfast=True, keepdb=False, reverse=False, debug_mode=False, debug_sql=False, **kwargs)
 
     ``DiscoverRunner`` will search for tests in any file matching ``pattern``.
 
@@ -400,6 +400,9 @@ execute and tear down the test suite.
     and have side effects. :ref:`Grouping by test class <order-of-tests>` is
     preserved when using this option.
 
+    ``debug_mode`` specifies what the :setting:`DEBUG` setting should be
+    set to prior to running tests.
+
     If ``debug_sql`` is ``True``, failing test cases will output SQL queries
     logged to the :ref:`django.db.backends logger <django-db-logger>` as well
     as the traceback. If ``verbosity`` is ``2``, then queries in all tests are
@@ -422,6 +425,10 @@ execute and tear down the test suite.
         options that the :djadmin:`test` command could use.
 
         The ``keepdb``, ``reverse``, and ``debug_sql`` arguments were added.
+
+    .. versionadded:: 1.11
+
+        The ``debug_mode`` keyword argument was added.
 
 Attributes
 ~~~~~~~~~~
@@ -490,7 +497,7 @@ Methods
 
     Sets up the test environment by calling
     :func:`~django.test.utils.setup_test_environment` and setting
-    :setting:`DEBUG` to ``False``.
+    :setting:`DEBUG` to ``self.debug_mode`` (defaults to ``False``).
 
 .. method:: DiscoverRunner.build_suite(test_labels, extra_tests=None, **kwargs)
 
