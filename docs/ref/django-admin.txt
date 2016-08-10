@@ -1269,6 +1269,13 @@ The ``--debug-sql`` option can be used to enable :ref:`SQL logging
 <django-db-logger>` for failing tests. If :djadminopt:`--verbosity` is ``2``,
 then queries in passing tests are also output.
 
+.. django-admin-option:: --debug-mode
+
+.. versionadded:: 1.11
+
+Sets the :setting:`DEBUG` setting to ``True`` prior to running tests. This may
+help troubleshoot test failures.
+
 .. django-admin-option:: --parallel
 
 .. versionadded:: 1.9
