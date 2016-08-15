@@ -9,7 +9,6 @@ import textwrap
 import unittest
 from importlib import import_module
 
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.test import SimpleTestCase, TestCase
@@ -257,8 +256,8 @@ def _run_subsuite(args):
     This helper lives at module-level and its arguments are wrapped in a tuple
     because of the multiprocessing module's requirements.
     """
-    subsuite_index, subsuite, failfast = args
-    runner = RemoteTestRunner(failfast=failfast)
+    runner_class, subsuite_index, subsuite, failfast = args
+    runner = runner_class(failfast=failfast)
     result = runner.run(subsuite)
     return subsuite_index, result.events
 
@@ -282,6 +281,7 @@ class ParallelTestSuite(unittest.TestSuite):
     # In case someone wants to modify these in a subclass.
     init_worker = _init_worker
     run_subsuite = _run_subsuite
+    runner_class = RemoteTestRunner
 
     def __init__(self, suite, processes, failfast=False):
         self.subsuites = partition_suite_by_case(suite)
@@ -313,7 +313,7 @@ class ParallelTestSuite(unittest.TestSuite):
             initializer=self.init_worker.__func__,
             initargs=[counter])
         args = [
-            (index, subsuite, self.failfast)
+            (self.runner_class, index, subsuite, self.failfast)
             for index, subsuite in enumerate(self.subsuites)
         ]
         test_results = pool.imap_unordered(self.run_subsuite.__func__, args)
@@ -359,7 +359,7 @@ class DiscoverRunner(object):
 
     def __init__(self, pattern=None, top_level=None, verbosity=1,
                  interactive=True, failfast=False, keepdb=False,
-                 reverse=False, debug_sql=False, parallel=0,
+                 reverse=False, debug_mode=False, debug_sql=False, parallel=0,
                  **kwargs):
 
         self.pattern = pattern
@@ -370,6 +370,7 @@ class DiscoverRunner(object):
         self.failfast = failfast
         self.keepdb = keepdb
         self.reverse = reverse
+        self.debug_mode = debug_mode
         self.debug_sql = debug_sql
         self.parallel = parallel
 
@@ -387,6 +388,9 @@ class DiscoverRunner(object):
         parser.add_argument('-r', '--reverse', action='store_true', dest='reverse',
             default=False,
             help='Reverses test cases order.')
+        parser.add_argument('--debug-mode', action='store_true', dest='debug_mode',
+            default=False,
+            help='Sets settings.DEBUG to True.')
         parser.add_argument('-d', '--debug-sql', action='store_true', dest='debug_sql',
             default=False,
             help='Prints logged SQL queries on failure.')
@@ -396,8 +400,7 @@ class DiscoverRunner(object):
             help='Run tests using up to N parallel processes.')
 
     def setup_test_environment(self, **kwargs):
-        setup_test_environment()
-        settings.DEBUG = False
+        setup_test_environment(debug=self.debug_mode)
         unittest.installHandler()
 
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
@@ -485,13 +488,17 @@ class DiscoverRunner(object):
     def get_resultclass(self):
         return DebugSQLTextTestResult if self.debug_sql else None
 
-    def run_suite(self, suite, **kwargs):
-        resultclass = self.get_resultclass()
-        return self.test_runner(
-            verbosity=self.verbosity,
+    def get_test_runner_kwargs(self):
+        return dict(
             failfast=self.failfast,
-            resultclass=resultclass,
-        ).run(suite)
+            resultclass=self.get_resultclass(),
+            verbosity=self.verbosity,
+        )
+
+    def run_suite(self, suite, **kwargs):
+        kwargs = self.get_test_runner_kwargs()
+        runner = self.test_runner(**kwargs)
+        return runner.run(suite)
 
     def teardown_databases(self, old_config, **kwargs):
         """

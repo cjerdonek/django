@@ -18,7 +18,7 @@ from django.test import (
     skipUnlessDBFeature,
 )
 from django.test.html import HTMLParseError, parse_html
-from django.test.utils import CaptureQueriesContext, override_settings
+from django.test.utils import CaptureQueriesContext, override_settings, setup_test_environment
 from django.utils import six
 from django.utils._os import abspathu
 from django.utils.deprecation import RemovedInDjango20Warning
@@ -836,6 +836,13 @@ class FirstUrls:
 
 class SecondUrls:
     urlpatterns = [url(r'second/$', empty_response, name='second')]
+
+
+class SetupTestEnvironmentTests(SimpleTestCase):
+
+    def test_setup_test_environment_calling_more_than_once(self):
+        with self.assertRaisesMessage(RuntimeError, "setup_test_environment() was already called"):
+            setup_test_environment()
 
 
 class OverrideSettingsTests(SimpleTestCase):

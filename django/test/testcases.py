@@ -1303,6 +1303,7 @@ class LiveServerTestCase(TransactionTestCase):
     other thread can see the changes.
     """
 
+    server_thread_class = LiveServerThread
     static_handler = _StaticFilesHandler
 
     @classproperty
@@ -1360,7 +1361,7 @@ class LiveServerTestCase(TransactionTestCase):
 
     @classmethod
     def _create_server_thread(cls, host, possible_ports, connections_override):
-        return LiveServerThread(
+        return cls.server_thread_class(
             host,
             possible_ports,
             cls.static_handler,
