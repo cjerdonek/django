@@ -1275,6 +1275,8 @@ class LiveServerThread(threading.Thread):
         except Exception as e:
             self.error = e
             self.is_ready.set()
+        finally:
+            connections.close_all()
 
     def _create_server(self, port):
         return WSGIServer((self.host, port), QuietWSGIRequestHandler)
@@ -1284,6 +1286,7 @@ class LiveServerThread(threading.Thread):
             # Stop the WSGI server
             self.httpd.shutdown()
             self.httpd.server_close()
+        self.join()
 
 
 class LiveServerTestCase(TransactionTestCase):
@@ -1370,7 +1373,6 @@ class LiveServerTestCase(TransactionTestCase):
         if hasattr(cls, 'server_thread'):
             # Terminate the live server's thread
             cls.server_thread.terminate()
-            cls.server_thread.join()
 
         # Restore sqlite in-memory database connections' non-shareability
         for conn in connections.all():
