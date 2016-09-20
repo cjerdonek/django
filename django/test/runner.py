@@ -25,7 +25,26 @@ except ImportError:
     tblib = None
 
 
-class DebugSQLTextTestResult(unittest.TextTestResult):
+class TextResult(unittest.TextTestResult):
+
+    def getDescription(self, test):
+        """
+        Return a description of the given test case for test output.
+
+        For the name portion, the method returns this, for example:
+        "test_runner.test_discover_runner.DiscoverRunnerTest.test_output"
+        instead of unittest's default of this:
+        "test_output (test_runner.test_discover_runner.DiscoverRunnerTest)"
+        """
+        desc = test.id()
+        doc_first_line = test.shortDescription()
+        if self.descriptions and doc_first_line:
+            desc += "\n" + doc_first_line
+
+        return desc
+
+
+class DebugSQLTextTestResult(TextResult):
     def __init__(self, stream, descriptions, verbosity):
         self.logger = logging.getLogger('django.db.backends')
         self.logger.setLevel(logging.DEBUG)
@@ -380,6 +399,11 @@ class ParallelTestSuite(unittest.TestSuite):
         return result
 
 
+class TextRunner(unittest.TextTestRunner):
+
+    resultclass = TextResult
+
+
 class DiscoverRunner(object):
     """
     A Django test runner that uses unittest2 test discovery.
@@ -387,7 +411,7 @@ class DiscoverRunner(object):
 
     test_suite = unittest.TestSuite
     parallel_test_suite = ParallelTestSuite
-    test_runner = unittest.TextTestRunner
+    test_runner = TextRunner
     test_loader = unittest.defaultTestLoader
     reorder_by = (TestCase, SimpleTestCase)
 

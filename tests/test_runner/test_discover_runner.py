@@ -5,6 +5,7 @@ from unittest import TestSuite, TextTestRunner, defaultTestLoader
 
 from django.test import TestCase
 from django.test.runner import DiscoverRunner
+from django.utils import six
 
 
 @contextmanager
@@ -17,6 +18,24 @@ def change_cwd(directory):
         yield
     finally:
         os.chdir(old_cwd)
+
+
+# The test names in this class don't begin with "test" to prevent the test
+# runner from discovering them.
+class OutputSampleTest(TestCase):
+
+    def failing_test_with_no_docstring(self):
+        assert False
+
+    def failing_test_with_single_line_docstring(self):
+        """Only line"""
+        assert False
+
+    def failing_test_with_multiline_docstring(self):
+        """Line1
+        Line2
+        """
+        assert False
 
 
 class DiscoverRunnerTest(TestCase):
@@ -178,7 +197,7 @@ class DiscoverRunnerTest(TestCase):
         self.assertEqual(DiscoverRunner().test_suite, TestSuite)
 
     def test_overridable_test_runner(self):
-        self.assertEqual(DiscoverRunner().test_runner, TextTestRunner)
+        self.assertTrue(issubclass(DiscoverRunner().test_runner, TextTestRunner))
 
     def test_overridable_test_loader(self):
         self.assertEqual(DiscoverRunner().test_loader, defaultTestLoader)
@@ -198,3 +217,29 @@ class DiscoverRunnerTest(TestCase):
         self.assertEqual(runner.build_suite(['test_discovery_sample.tests_sample']).countTestCases(), 0)
         runner = DiscoverRunner(exclude_tags=['slow'])
         self.assertEqual(runner.build_suite(['test_discovery_sample.tests_sample']).countTestCases(), 4)
+
+    def _get_test_output(self, test):
+        runner = DiscoverRunner()
+        suite = runner.test_suite()
+        suite.addTest(test)
+        stream = six.StringIO()
+        runner.test_runner(
+            stream=stream,
+            resultclass=runner.get_resultclass(),
+        ).run(suite)
+
+        if six.PY2:
+            stream.buflist = [force_text(x) for x in stream.buflist]
+        return stream.getvalue()
+
+    def test_output(self):
+        cases = [
+            ('failing_test_with_no_docstring', ""),
+            ('failing_test_with_single_line_docstring', "Only line\n"),
+            ('failing_test_with_multiline_docstring', "Line1\n"),
+        ]
+        for method_name, description in cases:
+            output = self._get_test_output(OutputSampleTest(methodName=method_name))
+            substring = ("FAIL: test_runner.test_discover_runner.OutputSampleTest.{}\n{}----"
+                .format(method_name, description))
+            self.assertIn(substring, output)

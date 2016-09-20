@@ -73,9 +73,9 @@ class TestDebugSQL(unittest.TestCase):
     verbose_expected_outputs = [
         # Output format changed in Python 3.5+
         x.format('' if sys.version_info < (3, 5) else 'TestDebugSQL.') for x in [
-            'runTest (test_runner.test_debug_sql.{}FailingTest) ... FAIL',
-            'runTest (test_runner.test_debug_sql.{}ErrorTest) ... ERROR',
-            'runTest (test_runner.test_debug_sql.{}PassingTest) ... ok',
+            'test_runner.test_debug_sql.{}FailingTest.runTest ... FAIL',
+            'test_runner.test_debug_sql.{}ErrorTest.runTest ... ERROR',
+            'test_runner.test_debug_sql.{}PassingTest.runTest ... ok',
         ]
     ] + [
         ('''SELECT COUNT(*) AS "__count" '''
