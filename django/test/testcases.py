@@ -1312,7 +1312,7 @@ class LiveServerTestCase(TransactionTestCase):
         for conn in connections.all():
             # If using in-memory sqlite databases, pass the connections to
             # the server thread.
-            if conn.vendor == 'sqlite' and conn.is_in_memory_db(conn.settings_dict['NAME']):
+            if conn.vendor == 'sqlite' and conn.is_in_memory_db():
                 # Explicitly enable thread-shareability for this connection
                 conn.allow_thread_sharing = True
                 connections_override[conn.alias] = conn
@@ -1373,7 +1373,7 @@ class LiveServerTestCase(TransactionTestCase):
 
         # Restore sqlite in-memory database connections' non-shareability
         for conn in connections.all():
-            if conn.vendor == 'sqlite' and conn.is_in_memory_db(conn.settings_dict['NAME']):
+            if conn.vendor == 'sqlite' and conn.is_in_memory_db():
                 conn.allow_thread_sharing = False
 
     @classmethod
