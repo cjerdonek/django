@@ -1318,6 +1318,13 @@ class <order-of-tests>` is preserved when using this option.
 Enables :ref:`SQL logging <django-db-logger>` for failing tests. If
 ``--verbosity`` is ``2``, then queries in passing tests are also output.
 
+.. django-admin-option:: --debug-mode
+
+.. versionadded:: 1.11
+
+Sets the :setting:`DEBUG` setting to ``True`` prior to running tests. This may
+help troubleshoot test failures.
+
 .. django-admin-option:: --parallel [N]
 
 .. versionadded:: 1.9
