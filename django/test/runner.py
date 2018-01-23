@@ -4,7 +4,9 @@ import logging
 import multiprocessing
 import os
 import pickle
+import sys
 import textwrap
+import traceback
 import unittest
 from importlib import import_module
 from io import StringIO
@@ -22,6 +24,10 @@ try:
     import tblib.pickling_support
 except ImportError:
     tblib = None
+
+
+class ParallelTestException(Exception):
+    pass
 
 
 class DebugSQLTextTestResult(unittest.TextTestResult):
@@ -119,6 +125,59 @@ You should re-run this test with --parallel=1 to reproduce the failure
 with a cleaner failure message.
 """.format(test, subtest, pickle_exc))
 
+    def exception_has_chain(self, err):
+        exc_type, exc, tb = err
+        return exc.__context__ is not None or exc.__context__ is not None
+
+    def try_pickle(self, err):
+        """
+        Return (is_picklable, pickle_err).
+        """
+        try:
+            self._confirm_picklable(err)
+        except Exception:
+            pickle_err = traceback.format_exc()
+        else:
+            return (True, None)
+
+        return (False, pickle_err)
+
+    def make_picklable_error(self, msg):
+        """
+        Create a picklable (exc_type, exc, tb) encoding the given message.
+        """
+        try:
+            raise ParallelTestException(msg) from None
+        except Exception:
+            err = sys.exc_info()
+
+        return err
+
+    def get_picklable_error(self, err):
+        """
+        Return the picklable (exc_type, exc, tb) to use.
+        """
+        if self.exception_has_chain(err):
+            pickle_err = None
+            reason = 'Test exception was chained:'
+        else:
+            should_pickle, pickle_err = self.try_pickle(err)
+            if should_pickle:
+                reason = None
+            else:
+                reason = 'Test exception could not be pickled:'
+
+        if reason is not None:
+            orig_msg = ''.join(traceback.format_exception(*err))
+            parts = [reason, 'Test error:', orig_msg]
+            if pickle_err is not None:
+                parts.extend(['Pickle error:', pickle_err])
+
+            msg = os.linesep.join(parts)
+            err = self.make_picklable_error(msg)
+
+        return err
+
     def check_picklable(self, test, err):
         # Ensure that sys.exc_info() tuples are picklable. This displays a
         # clear multiprocessing.pool.RemoteTraceback generated in the child
@@ -194,12 +253,12 @@ failure and get a correct traceback.
         self.events.append(('stopTest', self.test_index))
 
     def addError(self, test, err):
-        self.check_picklable(test, err)
+        err = self.get_picklable_error(err)
         self.events.append(('addError', self.test_index, err))
         self.stop_if_failfast()
 
     def addFailure(self, test, err):
-        self.check_picklable(test, err)
+        err = self.get_picklable_error(err)
         self.events.append(('addFailure', self.test_index, err))
         self.stop_if_failfast()
 
