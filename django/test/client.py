@@ -31,6 +31,7 @@ from django.utils.itercompat import is_iterable
 __all__ = ('Client', 'RedirectCycleError', 'RequestFactory', 'encode_file', 'encode_multipart')
 
 
+_DEFAULT_CONTENT = 'application/octet-stream'
 BOUNDARY = 'BoUnDaRyStRiNg'
 MULTIPART_CONTENT = 'multipart/form-data; boundary=%s' % BOUNDARY
 CONTENT_TYPE_RE = re.compile(r'.*; charset=([\w\d-]+);?')
@@ -237,7 +238,7 @@ def encode_file(boundary, key, file):
         content_type = None
 
     if content_type is None:
-        content_type = 'application/octet-stream'
+        content_type = _DEFAULT_CONTENT
     filename = filename or key
     return [
         to_bytes('--%s' % boundary),
@@ -339,9 +340,15 @@ class RequestFactory:
             **extra,
         })
 
-    def post(self, path, data=None, content_type=MULTIPART_CONTENT,
-             secure=False, **extra):
-        """Construct a POST request."""
+    def post(self, path, data=None, content_type=None, secure=False, **extra):
+        """
+        Construct a POST request.
+
+        Arguments:
+          content_type: Defaults to ``MULTIPART_CONTENT``.
+        """
+        if content_type is None:
+            content_type = MULTIPART_CONTENT
         data = self._encode_json({} if data is None else data, content_type)
         post_data = self._encode_data(data, content_type)
 
@@ -360,37 +367,68 @@ class RequestFactory:
         """Construct a TRACE request."""
         return self.generic('TRACE', path, secure=secure, **extra)
 
-    def options(self, path, data='', content_type='application/octet-stream',
-                secure=False, **extra):
-        "Construct an OPTIONS request."
+    def options(self, path, data='', content_type=None, secure=False,
+                **extra):
+        """
+        Construct an OPTIONS request.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         return self.generic('OPTIONS', path, data, content_type,
                             secure=secure, **extra)
 
-    def put(self, path, data='', content_type='application/octet-stream',
-            secure=False, **extra):
-        """Construct a PUT request."""
+    def put(self, path, data='', content_type=None, secure=False, **extra):
+        """
+        Construct a PUT request.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         data = self._encode_json(data, content_type)
         return self.generic('PUT', path, data, content_type,
                             secure=secure, **extra)
 
-    def patch(self, path, data='', content_type='application/octet-stream',
-              secure=False, **extra):
-        """Construct a PATCH request."""
+    def patch(self, path, data='', content_type=None, secure=False, **extra):
+        """
+        Construct a PATCH request.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         data = self._encode_json(data, content_type)
         return self.generic('PATCH', path, data, content_type,
                             secure=secure, **extra)
 
-    def delete(self, path, data='', content_type='application/octet-stream',
-               secure=False, **extra):
-        """Construct a DELETE request."""
+    def delete(self, path, data='', content_type=None, secure=False, **extra):
+        """
+        Construct a DELETE request.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         data = self._encode_json(data, content_type)
         return self.generic('DELETE', path, data, content_type,
                             secure=secure, **extra)
 
-    def generic(self, method, path, data='',
-                content_type='application/octet-stream', secure=False,
+    def generic(self, method, path, data='', content_type=None, secure=False,
                 **extra):
-        """Construct an arbitrary HTTP request."""
+        """
+        Construct an arbitrary HTTP request.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         parsed = urlparse(str(path))  # path can be lazy
         data = force_bytes(data, settings.DEFAULT_CHARSET)
         r = {
@@ -529,9 +567,16 @@ class Client(RequestFactory):
             response = self._handle_redirects(response, data=data, **extra)
         return response
 
-    def post(self, path, data=None, content_type=MULTIPART_CONTENT,
-             follow=False, secure=False, **extra):
-        """Request a response from the server using POST."""
+    def post(self, path, data=None, content_type=None, follow=False,
+             secure=False, **extra):
+        """
+        Request a response from the server using POST.
+
+        Arguments:
+          content_type: Defaults to ``MULTIPART_CONTENT``.
+        """
+        if content_type is None:
+            content_type = MULTIPART_CONTENT
         response = super().post(path, data=data, content_type=content_type, secure=secure, **extra)
         if follow:
             response = self._handle_redirects(response, data=data, content_type=content_type, **extra)
@@ -544,33 +589,61 @@ class Client(RequestFactory):
             response = self._handle_redirects(response, data=data, **extra)
         return response
 
-    def options(self, path, data='', content_type='application/octet-stream',
-                follow=False, secure=False, **extra):
-        """Request a response from the server using OPTIONS."""
+    def options(self, path, data='', content_type=None, follow=False,
+                secure=False, **extra):
+        """
+        Request a response from the server using OPTIONS.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         response = super().options(path, data=data, content_type=content_type, secure=secure, **extra)
         if follow:
             response = self._handle_redirects(response, data=data, content_type=content_type, **extra)
         return response
 
-    def put(self, path, data='', content_type='application/octet-stream',
-            follow=False, secure=False, **extra):
-        """Send a resource to the server using PUT."""
+    def put(self, path, data='', content_type=None, follow=False,
+            secure=False, **extra):
+        """
+        Send a resource to the server using PUT.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         response = super().put(path, data=data, content_type=content_type, secure=secure, **extra)
         if follow:
             response = self._handle_redirects(response, data=data, content_type=content_type, **extra)
         return response
 
-    def patch(self, path, data='', content_type='application/octet-stream',
-              follow=False, secure=False, **extra):
-        """Send a resource to the server using PATCH."""
+    def patch(self, path, data='', content_type=None, follow=False,
+              secure=False, **extra):
+        """
+        Send a resource to the server using PATCH.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         response = super().patch(path, data=data, content_type=content_type, secure=secure, **extra)
         if follow:
             response = self._handle_redirects(response, data=data, content_type=content_type, **extra)
         return response
 
-    def delete(self, path, data='', content_type='application/octet-stream',
-               follow=False, secure=False, **extra):
-        """Send a DELETE request to the server."""
+    def delete(self, path, data='', content_type=None, follow=False,
+               secure=False, **extra):
+        """
+        Send a DELETE request to the server.
+
+        Arguments:
+          content_type: Defaults to "application/octet-stream".
+        """
+        if content_type is None:
+            content_type = _DEFAULT_CONTENT
         response = super().delete(path, data=data, content_type=content_type, secure=secure, **extra)
         if follow:
             response = self._handle_redirects(response, data=data, content_type=content_type, **extra)

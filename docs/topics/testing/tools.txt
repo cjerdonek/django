@@ -194,7 +194,7 @@ Use the ``django.test.Client`` class to make requests.
         If you set ``secure`` to ``True`` the client will emulate an HTTPS
         request.
 
-    .. method:: Client.post(path, data=None, content_type=MULTIPART_CONTENT, follow=False, secure=False, **extra)
+    .. method:: Client.post(path, data=None, content_type=None, follow=False, secure=False, **extra)
 
         Makes a POST request on the provided ``path`` and returns a
         ``Response`` object, which is documented below.
@@ -231,8 +231,8 @@ Use the ``django.test.Client`` class to make requests.
         POST request, using ``content_type`` in the HTTP ``Content-Type``
         header.
 
-        If you don't provide a value for ``content_type``, the values in
-        ``data`` will be transmitted with a content type of
+        If you pass ``None`` or don't provide a value for ``content_type``,
+        the values in ``data`` will be transmitted with a content type of
         :mimetype:`multipart/form-data`. In this case, the key-value pairs in
         ``data`` will be encoded as a multipart message and used to create the
         POST data payload.
@@ -303,43 +303,51 @@ Use the ``django.test.Client`` class to make requests.
         including the ``follow``, ``secure`` and ``extra`` arguments, except
         it does not return a message body.
 
-    .. method:: Client.options(path, data='', content_type='application/octet-stream', follow=False, secure=False, **extra)
+    .. method:: Client.options(path, data='', content_type=None, follow=False, secure=False, **extra)
 
         Makes an OPTIONS request on the provided ``path`` and returns a
         ``Response`` object. Useful for testing RESTful interfaces.
 
         When ``data`` is provided, it is used as the request body, and
-        a ``Content-Type`` header is set to ``content_type``.
+        a ``Content-Type`` header is set to ``content_type``.  Passing
+        ``None`` or no ``content_type`` results in a default of
+        :mimetype:`application/octet-stream`.
 
         The ``follow``, ``secure`` and ``extra`` arguments act the same as for
         :meth:`Client.get`.
 
-    .. method:: Client.put(path, data='', content_type='application/octet-stream', follow=False, secure=False, **extra)
+    .. method:: Client.put(path, data='', content_type=None, follow=False, secure=False, **extra)
 
         Makes a PUT request on the provided ``path`` and returns a
         ``Response`` object. Useful for testing RESTful interfaces.
 
         When ``data`` is provided, it is used as the request body, and
-        a ``Content-Type`` header is set to ``content_type``.
+        a ``Content-Type`` header is set to ``content_type``.  Passing
+        ``None`` or no ``content_type`` results in a default of
+        :mimetype:`application/octet-stream`.
 
         The ``follow``, ``secure`` and ``extra`` arguments act the same as for
         :meth:`Client.get`.
 
-    .. method:: Client.patch(path, data='', content_type='application/octet-stream', follow=False, secure=False, **extra)
+    .. method:: Client.patch(path, data='', content_type=None, follow=False, secure=False, **extra)
 
         Makes a PATCH request on the provided ``path`` and returns a
-        ``Response`` object. Useful for testing RESTful interfaces.
+        ``Response`` object. Useful for testing RESTful interfaces.  Passing
+        ``None`` or no ``content_type`` results in a default of
+        :mimetype:`application/octet-stream`.
 
         The ``follow``, ``secure`` and ``extra`` arguments act the same as for
         :meth:`Client.get`.
 
-    .. method:: Client.delete(path, data='', content_type='application/octet-stream', follow=False, secure=False, **extra)
+    .. method:: Client.delete(path, data='', content_type=None, follow=False, secure=False, **extra)
 
         Makes a DELETE request on the provided ``path`` and returns a
         ``Response`` object. Useful for testing RESTful interfaces.
 
         When ``data`` is provided, it is used as the request body, and
-        a ``Content-Type`` header is set to ``content_type``.
+        a ``Content-Type`` header is set to ``content_type``.  Passing
+        ``None`` or no ``content_type`` results in a default of
+        :mimetype:`application/octet-stream`.
 
         The ``follow``, ``secure`` and ``extra`` arguments act the same as for
         :meth:`Client.get`.
